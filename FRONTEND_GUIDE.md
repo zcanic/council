@@ -217,31 +217,76 @@ Topic: "AI对工作的影响"
 </TopicLobby>
 ```
 
-#### 2. 话题详情页 (`/topics/[id]`)
-**功能需求**:
-- 展示完整的智慧树结构
-- 支持在树的任意节点查看评论
-- 卡片式评论浏览（分页模式）
-- 评论提交界面
-- 实时评论计数器（显示当前x/10）
+#### 2. 话题详情页 (`/topics/[id]`) - 渐进式设计
+**核心理念**：卡片回环 + 树状探索的混合模式
+
+**主视图 - 议会回环模式**:
+- 🎯 **聚焦当前回合** - 大卡片展示正在进行的讨论
+- 🔄 **回环进度指示** - 显示当前回合进度（如 "第3回合 - 7/10条评论"）
+- 📝 **沉浸式评论** - 模拟议会发言的仪式感
+- 🤖 **AI提纯动画** - 第10条评论触发的视觉转换
+
+**辅助视图 - 智慧树模式**:
+- 🌳 **讨论历程总览** - 点击切换到完整树状视图
+- 🔍 **路径追溯** - 查看观点如何层层演化
+- 🎯 **节点跳转** - 直接跳转到任意历史回合
 
 **关键状态管理**:
 ```tsx
 interface TopicPageState {
-  currentNode: 'topic' | 'summary';  // 当前查看的节点类型
-  currentNodeId: string;              // 当前节点ID
-  comments: Comment[];                // 当前节点的评论列表
-  currentPage: number;                // 评论分页（1-10）
-  canComment: boolean;                // 是否可以评论
+  viewMode: 'parliament' | 'tree';    // 视图模式切换
+  currentRound: number;               // 当前回合数（从1开始）
+  currentNodeId: string;              // 当前查看的节点ID
+  currentNodeType: 'topic' | 'summary'; // 节点类型
+  comments: Comment[];                // 当前节点的评论
+  roundProgress: number;              // 当前回合进度 (1-10)
+  canComment: boolean;                // 是否可以参与讨论
+  treeData: TreeNode[];               // 完整的树状结构数据
 }
 ```
 
-#### 3. 智慧树可视化组件
-**功能需求**:
-- 树形结构的交互式可视化
-- 点击节点切换查看内容
-- 清晰的父子关系展示
-- 节点状态视觉区分（活跃/锁定）
+#### 3. 视觉设计核心组件
+
+**议会回环组件**:
+```tsx
+<ParliamentRoundCard>
+  <RoundHeader>
+    <RoundNumber>第 {currentRound} 回合</RoundNumber>
+    <ProgressRing progress={roundProgress} total={10} />
+    <ViewToggle onClick={() => setViewMode('tree')} />
+  </RoundHeader>
+  
+  <DiscussionContent>
+    <NodeSummary>{currentNodeSummary}</NodeSummary>
+    <CommentCards comments={comments} />
+  </DiscussionContent>
+  
+  <ParticipateSection>
+    <CommentInput disabled={!canComment} />
+    <SubmitButton>参与讨论</SubmitButton>
+  </ParticipateSection>
+</ParliamentRoundCard>
+```
+
+**智慧树可视化组件**:
+```tsx
+<WisdomTreeView>
+  <TreeVisualization>
+    <TreeNode 
+      isActive={node.id === currentNodeId}
+      isLocked={node.status === 'locked'}
+      roundNumber={node.roundNumber}
+      participantCount={node.comments.length}
+      onClick={() => navigateToNode(node.id)}
+    />
+  </TreeVisualization>
+  
+  <TreeNavigation>
+    <BackToParliament onClick={() => setViewMode('parliament')} />
+    <PathBreadcrumb path={currentPath} />
+  </TreeNavigation>
+</WisdomTreeView>
+```
 
 ### 关键交互逻辑
 
@@ -279,16 +324,28 @@ const submitComment = async (content: string, author?: string) => {
 
 ## 🎯 核心用户体验设计
 
-### 智慧提纯的可视化
-1. **评论计数器**: 显示当前回环进度（如："7/10 条评论"）
-2. **锁定动画**: 第10条评论提交后的视觉反馈
-3. **摘要生成**: 显示AI处理进度和结果
-4. **树状结构**: 清晰展示讨论的演化路径
+### 议会回环的仪式感设计
+1. **回合进度环** - 圆形进度条显示当前讨论进度（x/10）
+2. **发言席动画** - 评论提交时的仪式感反馈
+3. **AI议长介入** - 第10条评论后的"议长宣布"动画
+4. **新回合启动** - 基于AI摘要开启下一回合的转场效果
 
-### 实时性考虑
-- 评论提交后的即时刷新
-- 话题状态变化的实时更新
-- 新摘要生成的通知机制
+### 智慧树的探索体验
+1. **分支生长动画** - 新摘要生成时的树枝延伸效果  
+2. **节点状态指示** - 不同颜色表示活跃/锁定/完成状态
+3. **路径高亮** - 鼠标悬停时高亮完整讨论路径
+4. **缩放导航** - 支持树状图的平移和缩放操作
+
+### 双模式切换策略
+**默认模式**：议会回环（降低学习成本）
+- 新用户直接理解"当前正在讨论什么"
+- 专注于参与当前回合，避免信息过载
+- 渐进式引导用户理解系统机制
+
+**高级模式**：智慧树视图（满足探索需求）
+- 一键切换到全局视野
+- 适合想要了解完整讨论历程的用户
+- 支持从任意节点重新开始参与
 
 ## 🔧 技术栈建议
 
@@ -382,23 +439,26 @@ npx prisma studio
 
 ## 📋 开发优先级建议
 
-### Phase 1: 基础功能 (1-2周)
+### Phase 1: 议会回环模式 (1-2周)
 1. **话题列表页面**: 简单列表形式展示话题
-2. **话题详情页面**: 基础的评论查看和提交
+2. **议会回环界面**: 实现卡片式的回合制讨论
 3. **API集成**: 完整的后端接口对接
-4. **基础样式**: 使用Tailwind实现基本UI
+4. **基础样式**: 使用Tailwind实现议会风格UI
+5. **回合进度指示**: 实现10条评论的进度环
 
-### Phase 2: 核心体验 (2-3周)  
-1. **智慧树可视化**: 实现树形结构展示
-2. **卡片式评论**: 分页浏览模式
-3. **实时更新**: 评论计数和状态更新
-4. **AI摘要展示**: 结构化数据的美观展示
+### Phase 2: 智慧树探索模式 (2-3周)  
+1. **树状视图切换**: 实现双模式界面切换
+2. **智慧树可视化**: D3.js实现交互式树状图
+3. **节点导航系统**: 支持在树的任意节点间跳转
+4. **路径追溯功能**: 显示完整的讨论演化路径
+5. **AI摘要美化**: 结构化展示AI提纯结果
 
-### Phase 3: 用户体验优化 (1-2周)
-1. **动画效果**: 锁定、摘要生成等动画
-2. **响应式设计**: 移动端适配
-3. **错误处理**: 完善的错误提示和处理
-4. **性能优化**: 代码分割和加载优化
+### Phase 3: 体验优化与动画 (1-2周)
+1. **议会仪式感**: 发言、AI介入、回合切换的动画
+2. **树状图交互**: 缩放、平移、悬停高亮等操作
+3. **响应式设计**: 移动端的简化版议会界面
+4. **性能优化**: 大型讨论树的渲染优化
+5. **用户引导**: 首次访问的功能介绍动画
 
 ## 🐛 常见问题和解决方案
 
