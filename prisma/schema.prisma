@@ -1,0 +1,43 @@
+// 统一后的 schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Topic {
+  id        String     @id @default(cuid())
+  title     String     @db.VarChar(255)
+  status    String     @default("active") // active | locked | completed
+  createdAt DateTime   @default(now())
+  comments  Comment[]
+  summaries Summary[]
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  content   String    @db.Text
+  author    String?   @db.VarChar(255)
+  createdAt DateTime  @default(now())
+  topicId   String?
+  topic     Topic?    @relation(fields: [topicId], references: [id])
+  summaryId String?
+  summary   Summary?  @relation(fields: [summaryId], references: [id])
+}
+
+model Summary {
+  id        String    @id @default(cuid())
+  content   String    @db.Text // 用于展示给用户的、可读性强的总结文本
+  metadata  Json?     // 存储AI返回的完整、原始的JSON对象
+  createdAt DateTime  @default(now())
+  topicId   String
+  topic     Topic     @relation(fields: [topicId], references: [id])
+  parentId  String?
+  parent    Summary?  @relation("SummaryToSummary", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children  Summary[] @relation("SummaryToSummary")
+  comments  Comment[]
+}
