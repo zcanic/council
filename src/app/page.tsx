@@ -1,8 +1,9 @@
+import TopicLobby from '@/components/lobby/TopicLobby';
+
 export default function HomePage() {
   return (
-    <main>
-      <h1>议会回环</h1>
-      <p>后端服务运行中...</p>
+    <main className="container mx-auto px-4 py-8">
+      <TopicLobby />
     </main>
   );
 }
