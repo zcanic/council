@@ -91,7 +91,7 @@ fi
 
 # 5. 安装依赖
 log_info "安装项目依赖..."
-npm ci --production --silent
+npm ci --production
 if [ $? -ne 0 ]; then
     log_error "依赖安装失败"
     exit 1
@@ -99,7 +99,7 @@ fi
 
 # 6. 数据库操作
 log_info "处理数据库..."
-npx prisma generate --silent
+npx prisma generate
 npx prisma db push --accept-data-loss
 if [ $? -ne 0 ]; then
     log_warn "数据库推送可能存在问题，请手动检查"
