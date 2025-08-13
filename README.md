@@ -51,6 +51,7 @@ npm install
 ### 2️⃣ 启动服务
 ```bash
 # 启动MySQL数据库
+cd deployment
 docker-compose up -d
 
 # 启动Ollama AI服务
@@ -134,32 +135,28 @@ npm run dev
 
 ```
 parliament-loop/
-├── 📁 src/
-│   ├── 📁 app/                    # Next.js App Router
-│   │   ├── 📁 api/                # API路由层
-│   │   │   ├── 📁 topics/         # 话题相关API
-│   │   │   ├── 📁 comments/       # 评论相关API
-│   │   │   └── 📁 health/         # 健康检查
-│   │   ├── layout.tsx             # 根布局组件
-│   │   └── page.tsx               # 首页组件
-│   ├── 📁 features/               # 功能模块（核心业务逻辑）
-│   │   ├── 📁 topics/             # 话题功能
-│   │   ├── 📁 comments/           # 评论功能
-│   │   └── 📁 summaries/          # 摘要功能
-│   ├── 📁 lib/                    # 基础库
-│   │   ├── config.ts              # 配置管理
-│   │   ├── exceptions.ts          # 异常处理
-│   │   └── prisma.ts              # 数据库客户端
-│   └── 📁 styles/                 # 样式文件
-├── 📁 prisma/                     # 数据库相关
-│   ├── schema.prisma              # 数据模型定义
-│   └── seed.ts                    # 初始数据
-├── 📁 tests/                      # 测试文件
-├── 📁 docs/                       # 项目文档
-├── docker-compose.yml             # Docker配置
-├── package.json                   # 项目依赖
-└── README.md                      # 项目文档
+├── � src/                          # 源代码目录
+│   ├── app/                         # Next.js App Router
+│   ├── components/                  # React组件
+│   ├── features/                    # 业务功能模块
+│   └── lib/                         # 工具库和配置
+├── � deployment/                   # 部署配置
+│   ├── docker-compose.yml          # Docker部署
+│   ├── ecosystem.config.js         # PM2配置
+│   └── deploy.sh                    # 部署脚本
+├── 📚 documentation/                # 项目文档
+│   ├── DEPLOYMENT.md                # 部署指南
+│   ├── FRONTEND_GUIDE.md            # 前端指南
+│   └── PARLIAMENT_ARCHITECTURE.md  # 架构说明
+├── 🧪 tests/                       # 测试文件
+│   ├── unit/                        # 单元测试
+│   └── integration/                 # 集成测试
+├── �️ prisma/                      # 数据库配置
+│   └── schema.prisma                # 数据模型
+└── 📦 public/                       # 静态资源
 ```
+
+> 详细结构说明请查看 [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)
 
 ## �️ 核心命令
 

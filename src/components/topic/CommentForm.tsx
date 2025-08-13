@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api, CreateCommentInput } from '@/lib/api';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -10,7 +10,7 @@ import { Send } from 'lucide-react';
 interface CommentFormProps {
   parentId: string;
   parentType: 'topic' | 'summary';
-  onCommentAdded: () => void;
+  onCommentAdded: (newComment?: any, isLastComment?: boolean) => void;
   currentCount: number;
   maxComments: number;
 }
@@ -26,9 +26,22 @@ export default function CommentForm({
   const [author, setAuthor] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [submittedCount, setSubmittedCount] = useState(0); // 跟踪已提交的评论数
+  const [justSubmitted, setJustSubmitted] = useState(false); // 跟踪是否刚刚提交
 
-  const remainingSlots = maxComments - currentCount;
+  // 使用实际计数加上本地提交计数
+  const effectiveCurrentCount = currentCount + submittedCount;
+  const remainingSlots = maxComments - effectiveCurrentCount;
   const isLastSlot = remainingSlots === 1;
+
+  // 当 currentCount 更新时重置 submittedCount，但延迟执行避免闪烁
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSubmittedCount(0);
+      setJustSubmitted(false);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [currentCount]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,11 +62,25 @@ export default function CommentForm({
         parentType,
       };
 
-      await api.createComment(input);
+      const newComment = await api.createComment(input);
       
+      // 立即清空表单，给用户即时反馈
       setContent('');
       setAuthor('');
-      onCommentAdded();
+      
+      // 增加本地提交计数
+      setSubmittedCount(prev => prev + 1);
+      
+      // 设置刚刚提交状态
+      setJustSubmitted(true);
+      setTimeout(() => setJustSubmitted(false), 3000);
+      
+      // 检查是否是第10条评论
+      const isLastComment = (effectiveCurrentCount + 1) >= maxComments;
+      
+      // 调用回调，传递新评论和是否是最后一条评论的信息
+      onCommentAdded(newComment, isLastComment);
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : '提交失败');
     } finally {
@@ -95,6 +122,11 @@ export default function CommentForm({
           </div>
           <div className="text-sm text-gray-600">
             还能发言 <span className="font-bold text-blue-600">{remainingSlots}</span> 次
+            {justSubmitted && (
+              <span className="ml-2 text-green-600 font-medium animate-pulse">
+                ✅ 发言成功！
+              </span>
+            )}
           </div>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">

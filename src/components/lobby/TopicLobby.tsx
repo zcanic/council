@@ -13,9 +13,11 @@ export default function TopicLobby() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTopics = async () => {
+  const fetchTopics = async (showLoading: boolean = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
       const data = await api.getTopics();
       setTopics(data);
       setError(null);
@@ -23,7 +25,9 @@ export default function TopicLobby() {
       console.error('Failed to fetch topics:', err);
       setError('获取议题列表失败');
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -32,11 +36,20 @@ export default function TopicLobby() {
   }, []);
 
   const handleTopicClick = (topicId: string) => {
+    // 使用 router.push 进行客户端路由，比页面刷新快
     router.push(`/topics/${topicId}`);
   };
 
-  const handleTopicCreated = () => {
-    fetchTopics(); // 刷新列表
+  const handleTopicCreated = (newTopic?: any) => {
+    if (newTopic) {
+      // 乐观更新：立即添加新话题到列表顶部
+      setTopics(prev => [newTopic, ...prev]);
+      // 延迟静默刷新确保数据一致性
+      setTimeout(() => fetchTopics(false), 500);
+    } else {
+      // 备用方案：重新获取数据
+      fetchTopics();
+    }
   };
 
   if (loading) {
@@ -55,7 +68,7 @@ export default function TopicLobby() {
       <div className="text-center py-12">
         <p className="text-red-600 mb-4">{error}</p>
         <button 
-          onClick={fetchTopics}
+          onClick={() => fetchTopics()}
           className="text-blue-600 hover:text-blue-700 underline"
         >
           重试

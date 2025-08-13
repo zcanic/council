@@ -23,7 +23,7 @@ interface ParliamentRoundCardProps {
   comments: Comment[];
   parentId: string;
   parentType: 'topic' | 'summary';
-  onCommentAdded: () => void;
+  onCommentAdded: (newComment?: any, isLastComment?: boolean) => void;
   onToggleTreeView: () => void;
   isTreeView: boolean;
 }

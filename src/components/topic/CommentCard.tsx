@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Comment } from '@/lib/api';
 import Card, { CardContent } from '@/components/ui/Card';
 import { User, Clock } from 'lucide-react';
@@ -10,7 +11,7 @@ interface CommentCardProps {
   total: number;
 }
 
-export default function CommentCard({ comment, index, total }: CommentCardProps) {
+const CommentCard = React.memo(function CommentCard({ comment, index, total }: CommentCardProps) {
   return (
     <Card className="mb-4">
       <CardContent className="space-y-3">
@@ -41,4 +42,6 @@ export default function CommentCard({ comment, index, total }: CommentCardProps)
       </CardContent>
     </Card>
   );
-}
+});
+
+export default CommentCard;

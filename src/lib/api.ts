@@ -61,7 +61,13 @@ class ParliamentAPI {
   }
 
   async getTopics(): Promise<Topic[]> {
-    const response = await fetch(`${this.baseURL}/api/topics`);
+    const response = await fetch(`${this.baseURL}/api/topics`, {
+      // 添加缓存策略加快后续请求
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch topics');
     }
@@ -86,7 +92,12 @@ class ParliamentAPI {
   }
 
   async getTopicTree(id: string): Promise<TopicWithRelations> {
-    const response = await fetch(`${this.baseURL}/api/topics/${id}`);
+    const response = await fetch(`${this.baseURL}/api/topics/${id}`, {
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
     if (!response.ok) {
       if (response.status === 404) {
         throw new Error('Topic not found');

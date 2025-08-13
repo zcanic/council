@@ -7,7 +7,7 @@ import Input from '@/components/ui/Input';
 import { Plus, X } from 'lucide-react';
 
 interface CreateTopicButtonProps {
-  onTopicCreated: () => void;
+  onTopicCreated: (newTopic?: any) => void;
 }
 
 export default function CreateTopicButton({ onTopicCreated }: CreateTopicButtonProps) {
@@ -28,10 +28,11 @@ export default function CreateTopicButton({ onTopicCreated }: CreateTopicButtonP
     setError('');
 
     try {
-      await api.createTopic({ title: title.trim() });
+      const newTopic = await api.createTopic({ title: title.trim() });
       setTitle('');
       setIsOpen(false);
-      onTopicCreated();
+      // 传递新创建的话题给父组件，实现乐观更新
+      onTopicCreated(newTopic);
     } catch (err) {
       setError(err instanceof Error ? err.message : '创建失败');
     } finally {

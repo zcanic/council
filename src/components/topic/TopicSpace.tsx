@@ -37,9 +37,11 @@ export default function TopicSpace({ topicId, summaryId }: TopicSpaceProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTopicData = useCallback(async () => {
+  const fetchTopicData = useCallback(async (showLoading: boolean = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
       const data = await api.getTopicTree(topicId);
       setTopicData(data);
       
@@ -55,7 +57,9 @@ export default function TopicSpace({ topicId, summaryId }: TopicSpaceProps) {
       console.error('Failed to fetch topic:', err);
       setError(err instanceof Error ? err.message : '获取议题失败');
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }, [topicId, summaryId]);
 
@@ -83,8 +87,29 @@ export default function TopicSpace({ topicId, summaryId }: TopicSpaceProps) {
     }
   };
 
-  const handleCommentAdded = () => {
-    fetchTopicData();
+  const handleCommentAdded = (newComment?: any, isLastComment?: boolean) => {
+    if (!topicData) return;
+    
+    const currentParentType = currentSummary ? 'summary' as const : 'topic' as const;
+    
+    // 简化的乐观更新：只添加评论，不处理复杂的状态同步
+    if (newComment) {
+      if (currentParentType === 'topic') {
+        setTopicData(prev => ({
+          ...prev,
+          status: isLastComment ? 'locked' as const : prev.status,
+          comments: [...prev.comments, newComment]
+        }));
+      } else if (currentParentType === 'summary' && currentSummary) {
+        setCurrentSummary(prev => prev ? {
+          ...prev,
+          comments: [...(prev.comments || []), newComment]
+        } : null);
+      }
+    }
+    
+    // 延迟刷新以确保后端数据同步，减少延迟时间
+    setTimeout(() => fetchTopicData(false), 300);
   };
 
   if (loading) {
