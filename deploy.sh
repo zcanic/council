@@ -10,7 +10,7 @@ echo "================================================"
 
 # 配置变量
 PROJECT_NAME="parliament-loop"
-PROJECT_DIR="/www/wwwroot/parliament.yourdomain.com"
+PROJECT_DIR="/www/wwwroot/council.zcanic.xyz"
 NODE_VERSION="18"
 DB_NAME="parliament_loop"
 PM2_APP_NAME="parliament-loop"
@@ -78,6 +78,10 @@ DATABASE_URL="mysql://council_user:your_password@localhost:3306/${DB_NAME}"
 # 生产环境配置
 NODE_ENV="production"
 NEXT_PUBLIC_API_URL="https://parliament.yourdomain.com"
+
+OPENAI_API_KEY="sk-aC6UVaONEdVIw0lEf1RUmZtw8CuHHkZRm1v2e3XJ3oADIgad"
+OPENAI_BASE_URL="https://api.moonshot.cn/v1"
+AI_MODEL_NAME="kimi-k2-0711-preview"
 
 # 其他配置
 PORT=3000

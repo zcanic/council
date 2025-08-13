@@ -4,7 +4,7 @@ module.exports = {
     name: 'parliament-loop',
     script: 'npm',
     args: 'start',
-    cwd: '/www/wwwroot/parliament.yourdomain.com',
+    cwd: '/www/wwwroot/council.zcanic.xyz',
     
     // 进程配置
     instances: 1,                    // 单实例模式，如果服务器配置高可以设置为 'max'
@@ -40,7 +40,11 @@ module.exports = {
     env_production: {
       NODE_ENV: 'production',
       PORT: 3000,
-      // 可以在这里添加更多生产环境变量
+      DATABASE_URL: 'mysql://council_user:parliament_pass_2024@localhost:3306/parliament_loop',
+      NEXT_PUBLIC_API_URL: 'http://council.zcanic.xyz',
+      OPENAI_API_KEY: 'sk-aC6UVaONEdVIw0lEf1RUmZtw8CuHHkZRm1v2e3XJ3oADIgad',
+      OPENAI_BASE_URL: 'https://api.moonshot.cn/v1',
+      AI_MODEL_NAME: 'kimi-k2-0711-preview'
     },
     
     // 开发环境配置（备用）
