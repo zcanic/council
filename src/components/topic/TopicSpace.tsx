@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { TopicWithRelations, Summary, api } from '@/lib/api';
 import TopicHeader from './TopicHeader';
@@ -16,6 +16,19 @@ interface TopicSpaceProps {
   summaryId?: string;
 }
 
+const findSummaryById = (summaries: Summary[], id: string): Summary | null => {
+  for (const summary of summaries) {
+    if (summary.id === id) {
+      return summary;
+    }
+    if (summary.children) {
+      const found = findSummaryById(summary.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
 export default function TopicSpace({ topicId, summaryId }: TopicSpaceProps) {
   const router = useRouter();
   const [topicData, setTopicData] = useState<TopicWithRelations | null>(null);
@@ -24,7 +37,7 @@ export default function TopicSpace({ topicId, summaryId }: TopicSpaceProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTopicData = async () => {
+  const fetchTopicData = useCallback(async () => {
     try {
       setLoading(true);
       const data = await api.getTopicTree(topicId);
@@ -44,24 +57,11 @@ export default function TopicSpace({ topicId, summaryId }: TopicSpaceProps) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const findSummaryById = (summaries: Summary[], id: string): Summary | null => {
-    for (const summary of summaries) {
-      if (summary.id === id) {
-        return summary;
-      }
-      if (summary.children) {
-        const found = findSummaryById(summary.children, id);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
+  }, [topicId, summaryId]);
 
   useEffect(() => {
     fetchTopicData();
-  }, [topicId, summaryId]);
+  }, [topicId, summaryId, fetchTopicData]);
 
   const handleBack = () => {
     router.push('/');

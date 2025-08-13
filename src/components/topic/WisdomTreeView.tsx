@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { TopicWithRelations, Summary } from '@/lib/api';
 import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -240,6 +241,3 @@ export default function WisdomTreeView({
     </div>
   );
 }
-
-// 修复useState导入
-import { useState } from 'react';
