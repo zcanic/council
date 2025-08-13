@@ -70,23 +70,37 @@ fi
 # 4. 检查环境变量
 log_info "检查环境变量..."
 if [ ! -f ".env.production" ] && [ ! -f ".env.local" ]; then
-    log_warn "未找到环境配置文件，创建模板..."
+    log_warn "未找到环境配置文件，创建生产配置..."
     cat > .env.production << EOF
+# Parliament Loop 生产环境配置
+
+# ================================
 # 数据库配置
-DATABASE_URL="mysql://council_user:your_password@localhost:3306/${DB_NAME}"
+# ================================
+DATABASE_URL="mysql://council_user:parliament_pass_2024@localhost:3306/parliament_loop"
 
-# 生产环境配置
+# ================================
+# 应用基础配置
+# ================================
 NODE_ENV="production"
-NEXT_PUBLIC_API_URL="https://parliament.yourdomain.com"
+PORT=3000
+NEXT_PUBLIC_API_URL="http://council.zcanic.xyz"
 
+# ================================
+# AI服务配置 - 使用Moonshot AI (Kimi)
+# ================================
 OPENAI_API_KEY="sk-aC6UVaONEdVIw0lEf1RUmZtw8CuHHkZRm1v2e3XJ3oADIgad"
 OPENAI_BASE_URL="https://api.moonshot.cn/v1"
 AI_MODEL_NAME="kimi-k2-0711-preview"
 
-# 其他配置
-PORT=3000
+# ================================
+# 性能配置
+# ================================
+DB_POOL_SIZE=10
 EOF
-    log_warn "请编辑 .env.production 文件并填入正确的配置信息"
+    log_success ".env.production 配置文件已创建"
+else
+    log_info "环境配置文件已存在"
 fi
 
 # 5. 安装依赖
