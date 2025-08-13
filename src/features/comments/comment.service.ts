@@ -7,16 +7,13 @@ import type { CreateCommentInput } from './comment.validation';
 const COMMENTS_PER_LOOP = 10;
 
 /**
- * Creates a comment and, if it's the 10th comment in a loop, triggers the AI summarization process.
- * This entire process is wrapped in a database transaction to ensure data integrity.
+ * Creates a comment and, if it's the 10th comment in a loop, immediately locks the topic
+ * and triggers background AI summarization. The user gets immediate response.
  * @param {CreateCommentInput} input - The validated data for creating the comment.
  * @returns {Promise<Comment>} The newly created comment.
  */
 export async function createCommentAndProcessLoop(input: CreateCommentInput) {
   const { content, author, parentId, parentType } = input;
-
-  // Use extended timeout for transactions that include AI processing
-  const transactionTimeout = parseInt(process.env.DB_TRANSACTION_TIMEOUT || '30000', 10);
 
   return prisma.$transaction(async (tx) => {
     // 1. Find the parent (Topic or Summary) and check its status
@@ -48,35 +45,79 @@ export async function createCommentAndProcessLoop(input: CreateCommentInput) {
     const commentCount = await tx.comment.count({ where: { [parentType === 'topic' ? 'topicId' : 'summaryId']: parentId } });
 
     if (commentCount >= COMMENTS_PER_LOOP) {
-      // 3.1. Lock the parent topic if it's a topic
+      // 3.1. Immediately lock the parent topic if it's a topic
       if (parentType === 'topic') {
         await tx.topic.update({ where: { id: parentId }, data: { status: 'locked' } });
       }
       // Note: Summaries don't have a status and are implicitly locked once they have comments.
 
-      // 3.2. Fetch the comments for summarization
-      const commentsToSummarize = await tx.comment.findMany({
-        where: { [parentType === 'topic' ? 'topicId' : 'summaryId']: parentId },
-        orderBy: { createdAt: 'asc' },
-        take: COMMENTS_PER_LOOP,
-      });
-
-      // 3.3. Call the AI service (this happens outside the DB transaction lock but within the logical transaction)
-      const summaryResult = await summarizeCommentsWithAI(commentsToSummarize);
-
-      // 3.4. Create the new summary in the database
-      await tx.summary.create({
-        data: {
-          content: summaryResult.consensus, // Main display content
-          metadata: summaryResult as any,   // Full AI JSON output
-          topicId: parentTopicId,           // Link back to the root topic
-          parentId: parentType === 'summary' ? parentId : undefined, // Link to parent summary if applicable
-        },
+      // 3.2. Trigger background AI processing (non-blocking)
+      // This runs asynchronously without blocking the user response
+      setImmediate(() => {
+        processAISummarizationInBackground(parentId, parentType, parentTopicId)
+          .catch(error => {
+            console.error('Background AI summarization failed:', error);
+            // In production, you might want to send this to a monitoring service
+          });
       });
     }
 
     return newComment;
-  }, {
-    timeout: transactionTimeout,
   });
+}
+
+/**
+ * Background AI processing function that handles summarization without blocking user requests.
+ * This function runs asynchronously and can take as long as needed.
+ * @param {string} parentId - The ID of the parent (topic or summary)
+ * @param {'topic' | 'summary'} parentType - The type of the parent
+ * @param {string} parentTopicId - The root topic ID for linking the summary
+ */
+async function processAISummarizationInBackground(
+  parentId: string, 
+  parentType: 'topic' | 'summary', 
+  parentTopicId: string
+) {
+  console.log(`🤖 Starting background AI summarization for ${parentType} ${parentId}`);
+  
+  try {
+    // 1. Fetch the comments for summarization in a separate transaction
+    const commentsToSummarize = await prisma.comment.findMany({
+      where: { [parentType === 'topic' ? 'topicId' : 'summaryId']: parentId },
+      orderBy: { createdAt: 'asc' },
+      take: COMMENTS_PER_LOOP,
+    });
+
+    console.log(`📄 Found ${commentsToSummarize.length} comments to summarize`);
+
+    // 2. Call the AI service (this can take 1+ minutes)
+    console.log('🔄 Calling Moonshot AI for summarization...');
+    const startTime = Date.now();
+    
+    const summaryResult = await summarizeCommentsWithAI(commentsToSummarize);
+    
+    const duration = Date.now() - startTime;
+    console.log(`✅ AI summarization completed in ${duration}ms`);
+
+    // 3. Save the summary in a separate transaction
+    await prisma.summary.create({
+      data: {
+        content: summaryResult.consensus, // Main display content
+        metadata: summaryResult as any,   // Full AI JSON output
+        topicId: parentTopicId,           // Link back to the root topic
+        parentId: parentType === 'summary' ? parentId : undefined, // Link to parent summary if applicable
+      },
+    });
+
+    console.log(`🎉 Summary successfully saved for ${parentType} ${parentId}`);
+
+  } catch (error) {
+    console.error(`❌ Background AI summarization failed for ${parentType} ${parentId}:`, error);
+    
+    // In production, you might want to:
+    // 1. Retry the operation
+    // 2. Send alert to monitoring service
+    // 3. Create a fallback summary
+    // 4. Unlock the topic if needed for manual intervention
+  }
 }
