@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable standalone output for Docker deployment
-  output: 'standalone',
+  // Remove standalone output for web deployment
+  // output: 'standalone',
+  
+  // Basic configuration
+  reactStrictMode: true,
+  swcMinify: true,
   
   // Experimental features
   experimental: {
@@ -15,7 +19,17 @@ const nextConfig = {
   },
 
   // Webpack configuration
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Client-side specific configs
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    
     config.externals.push({
       'prisma': 'commonjs prisma',
       '@prisma/client': 'commonjs @prisma/client'
