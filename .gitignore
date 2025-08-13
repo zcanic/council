@@ -166,3 +166,8 @@ Thumbs.db
 *.bak
 *.tmp
 *.temp
+
+# Test files with sensitive data
+test-*.js
+.env.test-*
+Dockerfile.debug
