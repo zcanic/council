@@ -15,7 +15,8 @@ const COMMENTS_PER_LOOP = 10;
 export async function createCommentAndProcessLoop(input: CreateCommentInput) {
   const { content, author, parentId, parentType } = input;
 
-  return prisma.$transaction(async (tx) => {
+  // Step 1: Quick transaction to create comment and check count
+  const result = await prisma.$transaction(async (tx) => {
     // 1. Find the parent (Topic or Summary) and check its status
     let parentTopicId: string;
     if (parentType === 'topic') {
@@ -44,26 +45,29 @@ export async function createCommentAndProcessLoop(input: CreateCommentInput) {
     // 3. Check if the loop is complete
     const commentCount = await tx.comment.count({ where: { [parentType === 'topic' ? 'topicId' : 'summaryId']: parentId } });
 
-    if (commentCount >= COMMENTS_PER_LOOP) {
-      // 3.1. Immediately lock the parent topic if it's a topic
-      if (parentType === 'topic') {
-        await tx.topic.update({ where: { id: parentId }, data: { status: 'locked' } });
-      }
-      // Note: Summaries don't have a status and are implicitly locked once they have comments.
+    return { newComment, commentCount, parentTopicId };
+  });
 
-      // 3.2. Trigger background AI processing (non-blocking)
-      // This runs asynchronously without blocking the user response
-      setImmediate(() => {
-        processAISummarizationInBackground(parentId, parentType, parentTopicId)
-          .catch(error => {
-            console.error('Background AI summarization failed:', error);
-            // In production, you might want to send this to a monitoring service
-          });
+  // Step 2: If we have 10 comments, handle outside transaction
+  if (result.commentCount >= COMMENTS_PER_LOOP) {
+    console.log(`🔒 Locking topic and starting background AI processing for ${parentType} ${parentId}`);
+    
+    // Lock the topic immediately in a separate transaction
+    if (parentType === 'topic') {
+      await prisma.topic.update({ 
+        where: { id: parentId }, 
+        data: { status: 'locked' } 
       });
     }
 
-    return newComment;
-  });
+    // Trigger background AI processing (non-blocking)
+    processAISummarizationInBackground(parentId, parentType, result.parentTopicId)
+      .catch(error => {
+        console.error('❌ Background AI summarization failed:', error);
+      });
+  }
+
+  return result.newComment;
 }
 
 /**

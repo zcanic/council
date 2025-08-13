@@ -65,11 +65,11 @@ export default function TopicLobby() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-7xl mx-auto space-y-8">
       {/* Header */}
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">议会回环</h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
+      <div className="text-center py-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">议会回环</h1>
+        <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
           在这里发现有价值的讨论议题。每个话题将经历10条评论的深度讨论，然后由AI提纯为智慧结晶。
         </p>
       </div>
@@ -81,12 +81,15 @@ export default function TopicLobby() {
 
       {/* Topics Grid */}
       {topics.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg mb-4">还没有任何议题</p>
-          <p className="text-gray-400">成为第一个发起讨论的人吧！</p>
+        <div className="text-center py-16 bg-white rounded-lg shadow-sm border">
+          <div className="max-w-md mx-auto">
+            <div className="text-6xl mb-4">💭</div>
+            <p className="text-xl text-gray-500 mb-2">还没有任何议题</p>
+            <p className="text-gray-400">成为第一个发起讨论的人吧！</p>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {topics.map((topic) => (
             <TopicNode
               key={topic.id}
@@ -98,9 +101,17 @@ export default function TopicLobby() {
       )}
 
       {/* Footer Info */}
-      <div className="text-center text-sm text-gray-500 pt-8">
-        <p>💡 每个议题收集10条评论后，AI将自动生成智慧总结</p>
-        <p>🌳 总结会成为新的讨论起点，形成不断进化的智慧之树</p>
+      <div className="text-center py-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+        <div className="max-w-2xl mx-auto space-y-2">
+          <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
+            <span className="text-xl">💡</span>
+            每个议题收集10条评论后，AI将自动生成智慧总结
+          </p>
+          <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
+            <span className="text-xl">🌳</span>
+            总结会成为新的讨论起点，形成不断进化的智慧之树
+          </p>
+        </div>
       </div>
     </div>
   );
