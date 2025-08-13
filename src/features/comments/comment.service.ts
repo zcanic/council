@@ -15,6 +15,9 @@ const COMMENTS_PER_LOOP = 10;
 export async function createCommentAndProcessLoop(input: CreateCommentInput) {
   const { content, author, parentId, parentType } = input;
 
+  // Use extended timeout for transactions that include AI processing
+  const transactionTimeout = parseInt(process.env.DB_TRANSACTION_TIMEOUT || '30000', 10);
+
   return prisma.$transaction(async (tx) => {
     // 1. Find the parent (Topic or Summary) and check its status
     let parentTopicId: string;
@@ -73,5 +76,7 @@ export async function createCommentAndProcessLoop(input: CreateCommentInput) {
     }
 
     return newComment;
+  }, {
+    timeout: transactionTimeout,
   });
 }
