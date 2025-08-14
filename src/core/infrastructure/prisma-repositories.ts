@@ -3,7 +3,8 @@
  * 实现领域仓储接口，使用Prisma ORM
  */
 
-import { PrismaClient, Topic as PrismaTopic, Comment as PrismaComment, Summary as PrismaSummary } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import type { Topic as PrismaTopic, Comment as PrismaComment, Summary as PrismaSummary } from '@prisma/client';
 
 import { 
   Topic, 
