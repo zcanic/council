@@ -3,7 +3,7 @@
  * 实现领域仓储接口，使用Prisma ORM
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Topic as PrismaTopic, Comment as PrismaComment, Summary as PrismaSummary } from '@prisma/client';
 
 import { 
   Topic, 
@@ -77,7 +77,7 @@ export class PrismaTopicRepository implements ITopicRepository {
       this.prisma.topic.count({ where })
     ]);
 
-    const topics = records.map(record => this.toDomainEntity(record));
+    const topics = records.map((record: PrismaTopic) => this.toDomainEntity(record));
     const totalPages = Math.ceil(totalCount / limit);
 
     return {
@@ -126,7 +126,7 @@ export class PrismaTopicRepository implements ITopicRepository {
     return count > 0;
   }
 
-  private toDomainEntity(record: any): Topic {
+  private toDomainEntity(record: PrismaTopic): Topic {
     return new (Topic as any)(
       record.id,
       record.title,
@@ -179,7 +179,7 @@ export class PrismaCommentRepository implements ICommentRepository {
       take: limit
     });
 
-    return records.map(record => this.toDomainEntity(record));
+    return records.map((record: PrismaComment) => this.toDomainEntity(record));
   }
 
   async countByParent(parentId: EntityId, parentType: NodeType): Promise<number> {
@@ -261,10 +261,10 @@ export class PrismaCommentRepository implements ICommentRepository {
       take: limit
     });
 
-    return records.map(record => this.toDomainEntity(record));
+    return records.map((record: PrismaComment) => this.toDomainEntity(record));
   }
 
-  private toDomainEntity(record: any): Comment {
+  private toDomainEntity(record: PrismaComment): Comment {
     const parentType = record.topicId ? NodeType.TOPIC : NodeType.SUMMARY;
     const parentId = record.topicId || record.summaryId;
 
@@ -301,7 +301,7 @@ export class PrismaSummaryRepository implements ISummaryRepository {
       orderBy: { createdAt: 'asc' }
     });
 
-    return records.map(record => this.toDomainEntity(record));
+    return records.map((record: PrismaSummary) => this.toDomainEntity(record));
   }
 
   async findByParentId(parentId: EntityId): Promise<Summary[]> {
@@ -310,7 +310,7 @@ export class PrismaSummaryRepository implements ISummaryRepository {
       orderBy: { createdAt: 'asc' }
     });
 
-    return records.map(record => this.toDomainEntity(record));
+    return records.map((record: PrismaSummary) => this.toDomainEntity(record));
   }
 
   async findTopLevelByTopicId(topicId: EntityId): Promise<Summary[]> {
@@ -322,7 +322,7 @@ export class PrismaSummaryRepository implements ISummaryRepository {
       orderBy: { createdAt: 'asc' }
     });
 
-    return records.map(record => this.toDomainEntity(record));
+    return records.map((record: PrismaSummary) => this.toDomainEntity(record));
   }
 
   async save(summary: Summary): Promise<void> {
@@ -375,7 +375,7 @@ export class PrismaSummaryRepository implements ISummaryRepository {
     return path;
   }
 
-  private toDomainEntity(record: any): Summary {
+  private toDomainEntity(record: PrismaSummary): Summary {
     return new (Summary as any)(
       record.id,
       record.content,
