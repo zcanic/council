@@ -52,87 +52,104 @@ export interface CreateCommentInput {
 
 class ParliamentAPI {
   private baseURL: string;
+  private timeout: number = 10000; // 10秒超时
 
   constructor() {
-    // Fix: Use proper base URL for production
+    // Fix: 在生产环境使用正确的服务器地址
     this.baseURL = process.env.NODE_ENV === 'development' 
       ? 'http://localhost:3000' 
-      : (typeof window !== 'undefined' ? window.location.origin : '');
+      : 'https://council.zcanic.xyz'; // 明确指定生产服务器地址
+  }
+
+  // 通用的fetch包装，包含超时和错误处理
+  private async fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('请求超时，请检查网络连接或稍后重试');
+      }
+      throw error;
+    }
   }
 
   async getTopics(): Promise<Topic[]> {
-    const response = await fetch(`${this.baseURL}/api/topics`, {
-      // 添加缓存策略加快后续请求
+    const response = await this.fetchWithTimeout(`${this.baseURL}/api/topics`, {
       cache: 'no-cache',
-      headers: {
-        'Content-Type': 'application/json',
-      }
     });
     if (!response.ok) {
-      throw new Error('Failed to fetch topics');
+      throw new Error('获取议题列表失败，请稍后重试');
     }
     return response.json();
   }
 
   async createTopic(input: CreateTopicInput): Promise<Topic> {
-    const response = await fetch(`${this.baseURL}/api/topics`, {
+    const response = await this.fetchWithTimeout(`${this.baseURL}/api/topics`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(input),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Failed to create topic');
+      throw new Error(error.message || '创建议题失败，请重试');
     }
 
     return response.json();
   }
 
   async getTopicTree(id: string): Promise<TopicWithRelations> {
-    const response = await fetch(`${this.baseURL}/api/topics/${id}`, {
+    const response = await this.fetchWithTimeout(`${this.baseURL}/api/topics/${id}`, {
       cache: 'no-cache',
-      headers: {
-        'Content-Type': 'application/json',
-      }
     });
     if (!response.ok) {
       if (response.status === 404) {
-        throw new Error('Topic not found');
+        throw new Error('议题不存在');
       }
-      throw new Error('Failed to fetch topic');
+      throw new Error('获取议题详情失败，请刷新重试');
     }
     return response.json();
   }
 
   async createComment(input: CreateCommentInput): Promise<Comment> {
-    const response = await fetch(`${this.baseURL}/api/comments`, {
+    const response = await this.fetchWithTimeout(`${this.baseURL}/api/comments`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(input),
     });
 
     if (!response.ok) {
       const error = await response.json();
       if (response.status === 403) {
-        throw new Error('This discussion loop is locked.');
+        throw new Error('此讨论回环已锁定，AI正在生成摘要');
       }
       if (response.status === 503) {
-        throw new Error('AI service is currently unavailable.');
+        throw new Error('AI服务暂时不可用，请稍后再试');
       }
-      throw new Error(error.message || 'Failed to create comment');
+      throw new Error(error.message || '发布评论失败，请重试');
     }
 
     return response.json();
   }
 
   async checkHealth(): Promise<{ status: string; message: string }> {
-    const response = await fetch(`${this.baseURL}/api/health`);
-    return response.json();
+    try {
+      const response = await this.fetchWithTimeout(`${this.baseURL}/api/health`);
+      return response.json();
+    } catch (error) {
+      return { status: 'error', message: '服务器连接失败' };
+    }
   }
 }
 

@@ -48,19 +48,11 @@ export async function createCommentAndProcessLoop(input: CreateCommentInput) {
     return { newComment, commentCount, parentTopicId };
   });
 
-  // Step 2: If we have 10 comments, handle outside transaction
+  // Step 2: If we have 10 comments, handle locking more efficiently
   if (result.commentCount >= COMMENTS_PER_LOOP) {
-    console.log(`🔒 Locking topic and starting background AI processing for ${parentType} ${parentId}`);
+    console.log(`🔒 Starting optimized processing for ${parentType} ${parentId}`);
     
-    // Lock the topic immediately in a separate transaction
-    if (parentType === 'topic') {
-      await prisma.topic.update({ 
-        where: { id: parentId }, 
-        data: { status: 'locked' } 
-      });
-    }
-
-    // Trigger background AI processing (non-blocking)
+    // 立即启动后台处理，不等待锁定操作
     processAISummarizationInBackground(parentId, parentType, result.parentTopicId)
       .catch(error => {
         console.error('❌ Background AI summarization failed:', error);
@@ -85,7 +77,16 @@ async function processAISummarizationInBackground(
   console.log(`🤖 Starting background AI summarization for ${parentType} ${parentId}`);
   
   try {
-    // 1. Fetch the comments for summarization in a separate transaction
+    // 1. 立即锁定主题（移到后台处理第一步）
+    if (parentType === 'topic') {
+      await prisma.topic.update({ 
+        where: { id: parentId }, 
+        data: { status: 'locked' } 
+      });
+      console.log(`🔒 Topic ${parentId} locked successfully`);
+    }
+
+    // 2. 获取要摘要的评论
     const commentsToSummarize = await prisma.comment.findMany({
       where: { [parentType === 'topic' ? 'topicId' : 'summaryId']: parentId },
       orderBy: { createdAt: 'asc' },
@@ -94,7 +95,7 @@ async function processAISummarizationInBackground(
 
     console.log(`📄 Found ${commentsToSummarize.length} comments to summarize`);
 
-    // 2. Call the AI service (this can take 1+ minutes)
+    // 3. 调用AI服务（耗时操作）
     console.log('🔄 Calling Moonshot AI for summarization...');
     const startTime = Date.now();
     
@@ -103,7 +104,7 @@ async function processAISummarizationInBackground(
     const duration = Date.now() - startTime;
     console.log(`✅ AI summarization completed in ${duration}ms`);
 
-    // 3. Save the summary in a separate transaction
+    // 4. 保存摘要
     await prisma.summary.create({
       data: {
         content: summaryResult.consensus, // Main display content
@@ -118,10 +119,22 @@ async function processAISummarizationInBackground(
   } catch (error) {
     console.error(`❌ Background AI summarization failed for ${parentType} ${parentId}:`, error);
     
-    // In production, you might want to:
-    // 1. Retry the operation
-    // 2. Send alert to monitoring service
-    // 3. Create a fallback summary
-    // 4. Unlock the topic if needed for manual intervention
+    // 失败时解锁主题，允许用户继续评论
+    if (parentType === 'topic') {
+      try {
+        await prisma.topic.update({ 
+          where: { id: parentId }, 
+          data: { status: 'active' } 
+        });
+        console.log(`🔓 Topic ${parentId} unlocked due to AI failure`);
+      } catch (unlockError) {
+        console.error(`Failed to unlock topic ${parentId}:`, unlockError);
+      }
+    }
+    
+    // 生产环境可以考虑：
+    // 1. 发送告警通知
+    // 2. 创建人工摘要占位符
+    // 3. 重试机制
   }
 }

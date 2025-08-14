@@ -6,6 +6,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import { Send } from 'lucide-react';
+import { SmartLoading, ActionFeedback } from '@/components/ui/SNSMicroInteractions';
+import { optimisticManager } from '@/lib/optimistic-manager';
 
 interface CommentFormProps {
   parentId: string;
@@ -26,10 +28,11 @@ export default function CommentForm({
   const [author, setAuthor] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [submittedCount, setSubmittedCount] = useState(0); // 跟踪已提交的评论数
-  const [justSubmitted, setJustSubmitted] = useState(false); // 跟踪是否刚刚提交
+  const [submittedCount, setSubmittedCount] = useState(0);
+  const [justSubmitted, setJustSubmitted] = useState(false);
+  const [actionStatus, setActionStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  // 使用实际计数加上本地提交计数
+  // SNS级别的状态管理
   const effectiveCurrentCount = currentCount + submittedCount;
   const remainingSlots = maxComments - effectiveCurrentCount;
   const isLastSlot = remainingSlots === 1;
@@ -43,6 +46,7 @@ export default function CommentForm({
     return () => clearTimeout(timer);
   }, [currentCount]);
 
+  // SNS级别的乐观提交
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -53,6 +57,7 @@ export default function CommentForm({
 
     setIsLoading(true);
     setError('');
+    setActionStatus('loading');
 
     try {
       const input: CreateCommentInput = {
@@ -62,27 +67,53 @@ export default function CommentForm({
         parentType,
       };
 
-      const newComment = await api.createComment(input);
+      // 创建乐观更新数据
+      const optimisticComment = {
+        id: `optimistic_${Date.now()}`,
+        content: input.content,
+        author: input.author || '匿名',
+        createdAt: new Date().toISOString(),
+        topicId: parentType === 'topic' ? parentId : undefined,
+        summaryId: parentType === 'summary' ? parentId : undefined,
+        _optimistic: true,
+        _action: 'create',
+        _resource: 'comment'
+      };
+
+      // 使用SNS级别的乐观更新
+      const newComment = await optimisticManager.optimisticUpdate(
+        'create',
+        'comment', 
+        optimisticComment,
+        () => api.createComment(input)
+      );
       
-      // 立即清空表单，给用户即时反馈
+      // 立即更新UI状态
       setContent('');
       setAuthor('');
-      
-      // 增加本地提交计数
       setSubmittedCount(prev => prev + 1);
-      
-      // 设置刚刚提交状态
       setJustSubmitted(true);
-      setTimeout(() => setJustSubmitted(false), 3000);
+      setActionStatus('success');
+      
+      // 重置提交状态
+      setTimeout(() => {
+        setJustSubmitted(false);
+        setActionStatus('idle');
+      }, 3000);
       
       // 检查是否是第10条评论
       const isLastComment = (effectiveCurrentCount + 1) >= maxComments;
       
-      // 调用回调，传递新评论和是否是最后一条评论的信息
-      onCommentAdded(newComment, isLastComment);
+      // 立即回调通知父组件（使用乐观数据）
+      onCommentAdded(optimisticComment, isLastComment);
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : '提交失败');
+      const errorMessage = err instanceof Error ? err.message : '提交失败，请重试';
+      setError(errorMessage);
+      setActionStatus('error');
+      
+      // 自动清除错误状态
+      setTimeout(() => setActionStatus('idle'), 5000);
     } finally {
       setIsLoading(false);
     }
