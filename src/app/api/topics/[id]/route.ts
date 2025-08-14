@@ -1,24 +1,31 @@
+/**
+ * 🎯 Topic Detail API - 使用重构后的架构
+ * 
+ * 基于DDD重构架构的话题详情API端点
+ * 提供类型安全、错误处理和性能优化
+ */
 
-import { NextResponse } from 'next/server';
-import { getTopicTree } from '@/features/topics/topic.service';
-import { NotFoundError } from '@/lib/exceptions';
+import { NextRequest } from 'next/server';
 
-interface Params {
-  id: string;
+import { handleGetTopic } from '@/adapters/api-handlers';
+import { GlobalContainer } from '@/core/container';
+
+// 确保容器在应用启动时初始化
+if (!process.env.__CONTAINER_INITIALIZED__) {
+  GlobalContainer.initialize();
+  process.env.__CONTAINER_INITIALIZED__ = 'true';
 }
 
 /**
- * Handles GET requests to fetch a single topic tree by its ID.
+ * 获取单个话题详情
+ * 
+ * @param request - NextRequest对象
+ * @param params - 路由参数
+ * @returns 话题详情数据
  */
-export async function GET(request: Request, { params }: { params: Params }) {
-  try {
-    const topicTree = await getTopicTree(params.id);
-    return NextResponse.json(topicTree);
-  } catch (error) {
-    if (error instanceof NotFoundError) {
-      return NextResponse.json({ message: error.message }, { status: error.statusCode });
-    }
-    console.error(`GET /api/topics/${params.id} error:`, error);
-    return NextResponse.json({ message: 'Failed to fetch topic' }, { status: 500 });
-  }
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  return handleGetTopic(request, { params });
 }

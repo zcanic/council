@@ -1,30 +1,27 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+/**
+ * 🎯 Health Check API - 使用重构后的架构
+ * 
+ * 基于DDD重构架构的健康检查API端点
+ * 提供系统状态监控和诊断信息
+ */
+
+import { NextRequest } from 'next/server';
+
+import { handleHealthCheck } from '@/adapters/api-handlers';
+import { GlobalContainer } from '@/core/container';
+
+// 确保容器在应用启动时初始化
+if (!process.env.__CONTAINER_INITIALIZED__) {
+  GlobalContainer.initialize();
+  process.env.__CONTAINER_INITIALIZED__ = 'true';
+}
 
 /**
- * Health check endpoint to verify that the application and database are working properly.
+ * 系统健康检查
+ * 
+ * @param request - NextRequest对象
+ * @returns 系统健康状态
  */
-export async function GET() {
-  try {
-    // Test database connection
-    await prisma.$queryRaw`SELECT 1`;
-    
-    return NextResponse.json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      database: 'connected',
-      message: 'Parliament Loop backend is running successfully'
-    });
-  } catch (error) {
-    console.error('Health check failed:', error);
-    return NextResponse.json(
-      {
-        status: 'unhealthy',
-        timestamp: new Date().toISOString(),
-        database: 'disconnected',
-        message: 'Backend service is experiencing issues'
-      },
-      { status: 503 }
-    );
-  }
+export async function GET(request: NextRequest) {
+  return handleHealthCheck(request);
 }

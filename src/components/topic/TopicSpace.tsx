@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { TopicWithRelations, Summary, api } from '@/lib/api';
-import TopicHeader from './TopicHeader';
-import ParliamentRoundCard from './ParliamentRoundCard';
-import WisdomTreeView from './WisdomTreeView';
-import SummaryCard from './SummaryCard';
+import { useState, useEffect, useCallback } from 'react';
+
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { TopicWithRelations, Summary, api } from '@/lib/api';
+
+import ParliamentRoundCard from './ParliamentRoundCard';
+import SummaryCard from './SummaryCard';
+import TopicHeader from './TopicHeader';
+import WisdomTreeView from './WisdomTreeView';
+
 
 type ViewMode = 'parliament' | 'tree';
 
@@ -23,9 +26,11 @@ const findSummaryById = (summaries: Summary[], id: string): Summary | null => {
     }
     if (summary.children) {
       const found = findSummaryById(summary.children, id);
+
       if (found) return found;
     }
   }
+
   return null;
 };
 
@@ -43,10 +48,12 @@ export default function TopicSpace({ topicId, summaryId }: TopicSpaceProps) {
         setLoading(true);
       }
       const data = await api.getTopicTree(topicId);
+
       setTopicData(data);
       
       if (summaryId && data.summaries) {
         const summary = findSummaryById(data.summaries, summaryId);
+
         setCurrentSummary(summary);
       } else {
         setCurrentSummary(null);
@@ -95,11 +102,15 @@ export default function TopicSpace({ topicId, summaryId }: TopicSpaceProps) {
     // 简化的乐观更新：只添加评论，不处理复杂的状态同步
     if (newComment) {
       if (currentParentType === 'topic') {
-        setTopicData(prev => ({
-          ...prev,
-          status: isLastComment ? 'locked' as const : prev.status,
-          comments: [...prev.comments, newComment]
-        }));
+        setTopicData(prev => {
+          if (!prev) return null;
+
+          return {
+            ...prev,
+            status: isLastComment ? 'locked' as const : prev.status,
+            comments: [...prev.comments, newComment]
+          };
+        });
       } else if (currentParentType === 'summary' && currentSummary) {
         setCurrentSummary(prev => prev ? {
           ...prev,

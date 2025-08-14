@@ -1,12 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { TopicWithRelations, Summary, Comment } from '@/lib/api';
-import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
-import ProgressRing from '@/components/ui/ProgressRing';
-import CommentCard from './CommentCard';
-import CommentForm from './CommentForm';
 import { 
   Eye, 
   Trees, 
@@ -16,6 +9,15 @@ import {
   ChevronRight,
   Users
 } from 'lucide-react';
+import { useState } from 'react';
+
+import Button from '@/components/ui/Button';
+import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import ProgressRing from '@/components/ui/ProgressRing';
+import { TopicWithRelations, Summary, Comment } from '@/lib/api';
+
+import CommentCard from './CommentCard';
+import CommentForm from './CommentForm';
 
 interface ParliamentRoundCardProps {
   topic: TopicWithRelations;
@@ -193,11 +195,13 @@ export default function ParliamentRoundCard({
                 </div>
               </CardHeader>
               <CardContent>
-                <CommentCard
-                  comment={comments[currentCommentIndex]}
-                  index={currentCommentIndex}
-                  total={comments.length}
-                />
+                {comments[currentCommentIndex] && (
+                  <CommentCard
+                    comment={comments[currentCommentIndex]}
+                    index={currentCommentIndex}
+                    total={comments.length}
+                  />
+                )}
               </CardContent>
             </Card>
           )}

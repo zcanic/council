@@ -1,9 +1,10 @@
 'use client';
 
-import { TopicWithRelations, Summary } from '@/lib/api';
-import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { MessageCircle, Lock, Clock, ArrowLeft } from 'lucide-react';
+
 import Button from '@/components/ui/Button';
+import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { TopicWithRelations, Summary } from '@/lib/api';
 
 interface TopicHeaderProps {
   topic: TopicWithRelations;

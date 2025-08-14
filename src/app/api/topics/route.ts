@@ -1,46 +1,37 @@
-
-import { NextResponse } from 'next/server';
-import { createTopic, getAllTopics } from '@/features/topics/topic.service';
-import { createTopicSchema } from '@/features/topics/topic.validation';
-import { ZodError } from 'zod';
-import { BadRequestError } from '@/lib/exceptions';
-
 /**
- * Handles GET requests to fetch all topics.
+ * 🎯 Topics API - 使用重构后的架构
+ * 
+ * 基于DDD重构架构的话题API端点
+ * 提供类型安全、错误处理和性能优化
  */
-export async function GET() {
-  try {
-    const topics = await getAllTopics();
-    return NextResponse.json(topics);
-  } catch (error) {
-    console.error('GET /api/topics error:', error);
-    return NextResponse.json({ message: 'Failed to fetch topics' }, { status: 500 });
-  }
+
+import { NextRequest } from 'next/server';
+
+import { handleCreateTopic, handleGetTopics } from '@/adapters/api-handlers';
+import { GlobalContainer } from '@/core/container';
+
+// 确保容器在应用启动时初始化
+if (!process.env.__CONTAINER_INITIALIZED__) {
+  GlobalContainer.initialize();
+  process.env.__CONTAINER_INITIALIZED__ = 'true';
 }
 
 /**
- * Handles POST requests to create a new topic.
+ * 获取所有话题
+ * 
+ * @param request - NextRequest对象
+ * @returns 话题列表
  */
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const validation = createTopicSchema.safeParse(body);
+export async function GET(request: NextRequest) {
+  return handleGetTopics(request);
+}
 
-    if (!validation.success) {
-      throw new BadRequestError('Invalid input', validation.error.errors);
-    }
-
-    const newTopic = await createTopic(validation.data.title);
-    return NextResponse.json(newTopic, { status: 201 });
-
-  } catch (error) {
-    if (error instanceof BadRequestError) {
-      return NextResponse.json({ message: error.message, errors: error.errors }, { status: error.statusCode });
-    }
-    if (error instanceof ZodError) { // Redundant but safe
-      return NextResponse.json({ message: 'Invalid input', errors: error.errors }, { status: 400 });
-    }
-    console.error('POST /api/topics error:', error);
-    return NextResponse.json({ message: 'Failed to create topic' }, { status: 500 });
-  }
+/**
+ * 创建新话题
+ * 
+ * @param request - NextRequest对象
+ * @returns 新创建的话题数据
+ */
+export async function POST(request: NextRequest) {
+  return handleCreateTopic(request);
 }

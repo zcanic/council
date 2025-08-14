@@ -2,6 +2,7 @@
 // 提供Twitter/Instagram级别的用户体验
 
 import React, { useState, useEffect } from 'react';
+
 import { cn } from '@/lib/utils';
 
 // 智能Loading状态组件
@@ -73,10 +74,12 @@ export function ProgressiveContent({
     if (show) {
       setShouldRender(true);
       const timer = setTimeout(() => setIsVisible(true), delay);
+
       return () => clearTimeout(timer);
     } else {
       setIsVisible(false);
       const timer = setTimeout(() => setShouldRender(false), 300);
+
       return () => clearTimeout(timer);
     }
   }, [show, delay]);
@@ -124,9 +127,12 @@ export function ActionFeedback({
     if (status === 'success' || status === 'error') {
       setShow(true);
       const timer = setTimeout(() => setShow(false), 3000);
+
       return () => clearTimeout(timer);
     } else {
       setShow(false);
+
+      return () => {}; // 返回空清理函数
     }
   }, [status]);
 

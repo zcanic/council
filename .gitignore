@@ -32,6 +32,18 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+
+# Sensitive configuration files
+ecosystem.config.js
+pm2.config.js
+deploy-*.sh
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+*.temp
 
 # Vercel
 .vercel
@@ -166,6 +178,18 @@ Thumbs.db
 *.bak
 *.tmp
 *.temp
+
+# Server deployment files (SECURITY SENSITIVE)
+deploy-*.sh
+ecosystem.config.js
+pm2.config.js
+.env.production*
+PRODUCTION_READINESS_CHECKLIST.md
+BAOTA_DEPLOYMENT_GUIDE.md
+
+# Analysis and documentation with sensitive info
+AI_DUPLICATE_ISSUE_ANALYSIS.md
+CLEANUP_REPORT.md
 
 # Test files with sensitive data
 test-*.js

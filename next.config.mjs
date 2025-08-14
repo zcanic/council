@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove standalone output for web deployment
-  // output: 'standalone',
+  // Enable standalone output for Docker deployment
+  output: 'standalone',
   
   // Basic configuration
   reactStrictMode: true,

@@ -1,12 +1,13 @@
 'use client';
 
+import { Send } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { api, CreateCommentInput } from '@/lib/api';
+
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
-import { Send } from 'lucide-react';
 import { SmartLoading, ActionFeedback } from '@/components/ui/SNSMicroInteractions';
+import Textarea from '@/components/ui/Textarea';
+import { api, CreateCommentInput } from '@/lib/api';
 import { optimisticManager } from '@/lib/optimistic-manager';
 
 interface CommentFormProps {
@@ -43,6 +44,7 @@ export default function CommentForm({
       setSubmittedCount(0);
       setJustSubmitted(false);
     }, 100);
+
     return () => clearTimeout(timer);
   }, [currentCount]);
 
@@ -52,6 +54,7 @@ export default function CommentForm({
     
     if (content.trim().length < 1) {
       setError('评论内容不能为空');
+
       return;
     }
 
@@ -109,6 +112,7 @@ export default function CommentForm({
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '提交失败，请重试';
+
       setError(errorMessage);
       setActionStatus('error');
       

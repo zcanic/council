@@ -1,8 +1,9 @@
 'use client';
 
-import { Topic } from '@/lib/api';
-import Card, { CardContent, CardDescription, CardTitle } from '@/components/ui/Card';
 import { MessageCircle, Lock, Clock } from 'lucide-react';
+
+import Card, { CardContent, CardDescription, CardTitle } from '@/components/ui/Card';
+import { Topic } from '@/lib/api';
 
 interface TopicNodeProps {
   topic: Topic;

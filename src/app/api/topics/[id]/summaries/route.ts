@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+
 import { NotFoundError, AppError } from '@/lib/exceptions';
+import { prisma } from '@/lib/prisma';
 
 /**
  * GET /api/topics/[id]/summaries
@@ -46,6 +47,7 @@ export async function GET(
     }
 
     console.error('GET /api/topics/[id]/summaries error:', error);
+
     return NextResponse.json(
       { message: 'An unexpected error occurred.' },
       { status: 500 }

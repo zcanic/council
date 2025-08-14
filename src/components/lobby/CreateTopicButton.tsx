@@ -1,10 +1,11 @@
 'use client';
 
+import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
-import { api, CreateTopicInput } from '@/lib/api';
+
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { Plus, X } from 'lucide-react';
+import { api, CreateTopicInput } from '@/lib/api';
 
 interface CreateTopicButtonProps {
   onTopicCreated: (newTopic?: any) => void;
@@ -21,6 +22,7 @@ export default function CreateTopicButton({ onTopicCreated }: CreateTopicButtonP
     
     if (title.trim().length < 5) {
       setError('议题标题至少需要5个字符');
+
       return;
     }
 
@@ -29,6 +31,7 @@ export default function CreateTopicButton({ onTopicCreated }: CreateTopicButtonP
 
     try {
       const newTopic = await api.createTopic({ title: title.trim() });
+
       setTitle('');
       setIsOpen(false);
       // 传递新创建的话题给父组件，实现乐观更新

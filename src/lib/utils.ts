@@ -1,257 +1,496 @@
 /**
- * 工具函数集合
- * 用于样式组合和条件渲染
+ * 🛠️ Parliament Loop - 完美工具函数库
+ * 
+ * Jobs式的完美主义：每一个工具函数都经过精心设计和优化
+ * 提供类型安全、性能优化和开发体验的完美平衡
  */
 
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 /**
- * 组合和合并Tailwind CSS类名
- * 使用clsx进行条件组合，twMerge处理冲突
+ * 🎨 样式合并工具
+ * 
+ * 智能合并Tailwind CSS类名，处理冲突和优先级
+ * 基于clsx和tailwind-merge的完美结合
+ * 
+ * @example
+ * ```ts
+ * cn('px-2 py-1', isActive && 'bg-blue-500', 'px-4') // 'py-1 bg-blue-500 px-4'
+ * ```
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * 格式化时间显示
+ * 📏 数值格式化工具
  */
-export function formatDate(date: string | Date): string {
-  const d = new Date(date);
-  const now = new Date();
-  const diff = now.getTime() - d.getTime();
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
+export const formatters = {
+  /**
+   * 格式化数字为人类可读格式
+   * @example formatNumber(1234) => "1.2k"
+   */
+  number: (num: number): string => {
+    if (num < 1000) return num.toString();
+    if (num < 1000000) return `${(num / 1000).toFixed(1)}k`;
 
-  if (days > 7) {
-    return d.toLocaleDateString('zh-CN');
-  } else if (days > 0) {
-    return `${days}天前`;
-  } else if (hours > 0) {
-    return `${hours}小时前`;
-  } else if (minutes > 0) {
-    return `${minutes}分钟前`;
-  } else {
-    return '刚刚';
-  }
-}
+    return `${(num / 1000000).toFixed(1)}M`;
+  },
 
-/**
- * 格式化相对时间
- */
-export function formatRelativeTime(date: string | Date): string {
-  const d = new Date(date);
-  const rtf = new Intl.RelativeTimeFormat('zh-CN', { numeric: 'auto' });
-  const now = new Date();
-  const diff = d.getTime() - now.getTime();
-  
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (Math.abs(days) >= 1) {
-    return rtf.format(days, 'day');
-  } else if (Math.abs(hours) >= 1) {
-    return rtf.format(hours, 'hour');
-  } else if (Math.abs(minutes) >= 1) {
-    return rtf.format(minutes, 'minute');
-  } else {
-    return rtf.format(seconds, 'second');
-  }
-}
-
-/**
- * 截断文本
- */
-export function truncate(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength).trim() + '...';
-}
-
-/**
- * 防抖函数
- */
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  delay: number
-): (...args: Parameters<T>) => void {
-  let timeoutId: NodeJS.Timeout;
-  
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func.apply(null, args), delay);
-  };
-}
-
-/**
- * 节流函数
- */
-export function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  limit: number
-): (...args: Parameters<T>) => void {
-  let inThrottle: boolean;
-  
-  return (...args: Parameters<T>) => {
-    if (!inThrottle) {
-      func.apply(null, args);
-      inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+  /**
+   * 格式化文件大小
+   * @example formatBytes(1024) => "1.0 KB"
+   */
+  bytes: (bytes: number): string => {
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
     }
-  };
-}
+    
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
+  },
+
+  /**
+   * 格式化相对时间
+   * @example formatRelativeTime(new Date(Date.now() - 3600000)) => "1小时前"
+   */
+  relativeTime: (date: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSeconds < 60) return '刚刚';
+    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+    if (diffHours < 24) return `${diffHours}小时前`;
+    if (diffDays < 7) return `${diffDays}天前`;
+    
+    return date.toLocaleDateString('zh-CN');
+  },
+
+  /**
+   * 格式化持续时间
+   * @example formatDuration(3665) => "1小时1分5秒"
+   */
+  duration: (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    const parts: string[] = [];
+
+    if (hours > 0) parts.push(`${hours}小时`);
+    if (minutes > 0) parts.push(`${minutes}分钟`);
+    if (secs > 0) parts.push(`${secs}秒`);
+
+    return parts.join('') || '0秒';
+  }
+};
 
 /**
- * 数字格式化
+ * 📝 文本处理工具
  */
-export function formatNumber(num: number, locale: string = 'zh-CN'): string {
-  return new Intl.NumberFormat(locale).format(num);
-}
+export const textUtils = {
+  /**
+   * 截取文本到指定长度
+   * @example truncate("Hello World", 5) => "Hello..."
+   */
+  truncate: (text: string, maxLength: number, suffix = '...'): string => {
+    if (text.length <= maxLength) return text;
 
-/**
- * 生成随机ID
- */
-export function generateId(prefix: string = 'id'): string {
-  return `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
-}
+    return text.slice(0, maxLength - suffix.length) + suffix;
+  },
 
-/**
- * 深度克隆对象
- */
-export function deepClone<T>(obj: T): T {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
-  
-  if (obj instanceof Date) {
-    return new Date(obj.getTime()) as any;
-  }
-  
-  if (Array.isArray(obj)) {
-    return obj.map(item => deepClone(item)) as any;
-  }
-  
-  if (typeof obj === 'object') {
-    const cloned: any = {};
-    for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        cloned[key] = deepClone(obj[key]);
+  /**
+   * 提取文本摘要
+   */
+  excerpt: (text: string, maxLength = 150): string => {
+    const cleaned = text.replace(/\s+/g, ' ').trim();
+
+    if (cleaned.length <= maxLength) return cleaned;
+    
+    // 尝试在句号处截断
+    const sentences = cleaned.split(/[。！？]/);
+    let excerpt = '';
+    
+    for (const sentence of sentences) {
+      if ((excerpt + sentence).length <= maxLength) {
+        excerpt += sentence + (cleaned.includes(`${sentence}。`) ? '。' : '');
+      } else {
+        break;
       }
     }
-    return cloned;
+    
+    return excerpt || textUtils.truncate(cleaned, maxLength);
+  },
+
+  /**
+   * 高亮搜索关键词
+   */
+  highlight: (text: string, query: string): string => {
+    if (!query.trim()) return text;
+    
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+
+    return text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+  },
+
+  /**
+   * 生成唯一的slug
+   */
+  slugify: (text: string): string => {
+    return text
+      .toLowerCase()
+      .replace(/[^\u4e00-\u9fa5a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 50);
   }
-  
-  return obj;
-}
+};
 
 /**
- * 检查是否为空值
+ * 🛡️ 数据验证工具
  */
-export function isEmpty(value: any): boolean {
-  if (value == null) return true;
-  if (typeof value === 'string') return value.trim() === '';
-  if (Array.isArray(value)) return value.length === 0;
-  if (typeof value === 'object') return Object.keys(value).length === 0;
-  return false;
-}
+export const validators = {
+  /**
+   * 验证邮箱格式
+   */
+  email: (email: string): boolean => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/**
- * 安全的JSON解析
- */
-export function safeJsonParse<T>(text: string, fallback: T): T {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return fallback;
-  }
-}
+    return regex.test(email);
+  },
 
-/**
- * 复制到剪贴板
- */
-export async function copyToClipboard(text: string): Promise<boolean> {
-  try {
-    if (navigator.clipboard) {
-      await navigator.clipboard.writeText(text);
+  /**
+   * 验证URL格式
+   */
+  url: (url: string): boolean => {
+    try {
+      new URL(url);
+
       return true;
-    } else {
-      // 降级方案
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      return true;
+    } catch {
+      return false;
     }
-  } catch (error) {
-    console.error('复制失败:', error);
-    return false;
-  }
-}
-
-/**
- * 滚动到元素
- */
-export function scrollToElement(
-  elementId: string, 
-  behavior: ScrollBehavior = 'smooth'
-): void {
-  const element = document.getElementById(elementId);
-  if (element) {
-    element.scrollIntoView({ behavior, block: 'start' });
-  }
-}
-
-/**
- * 获取元素尺寸
- */
-export function getElementSize(elementId: string): { width: number; height: number } | null {
-  const element = document.getElementById(elementId);
-  if (!element) return null;
-  
-  const rect = element.getBoundingClientRect();
-  return {
-    width: rect.width,
-    height: rect.height
-  };
-}
-
-/**
- * 颜色工具
- */
-export const colors = {
-  /**
-   * 将十六进制颜色转换为RGB
-   */
-  hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : null;
   },
-  
+
   /**
-   * 将RGB颜色转换为十六进制
+   * 验证中文姓名
    */
-  rgbToHex(r: number, g: number, b: number): string {
-    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+  chineseName: (name: string): boolean => {
+    const regex = /^[\u4e00-\u9fa5]{2,10}$/;
+
+    return regex.test(name);
   },
-  
+
+  /**
+   * 验证手机号码
+   */
+  phone: (phone: string): boolean => {
+    const regex = /^1[3-9]\d{9}$/;
+
+    return regex.test(phone);
+  }
+};
+
+/**
+ * 🎯 数组工具
+ */
+export const arrayUtils = {
+  /**
+   * 数组去重
+   */
+  unique: <T>(array: T[], keyFn?: (item: T) => any): T[] => {
+    if (!keyFn) {
+      const set = new Set(array);
+
+      return Array.from(set);
+    }
+    
+    const seen = new Set();
+
+    return array.filter(item => {
+      const key = keyFn(item);
+
+      if (seen.has(key)) return false;
+      seen.add(key);
+
+      return true;
+    });
+  },
+
+  /**
+   * 数组分组
+   */
+  groupBy: <T>(array: T[], keyFn: (item: T) => string): Record<string, T[]> => {
+    return array.reduce((groups, item) => {
+      const key = keyFn(item);
+
+      groups[key] = groups[key] || [];
+      groups[key].push(item);
+
+      return groups;
+    }, {} as Record<string, T[]>);
+  },
+
+  /**
+   * 数组排序（支持多字段）
+   */
+  sortBy: <T>(array: T[], ...keys: Array<keyof T | ((item: T) => any)>): T[] => {
+    return [...array].sort((a, b) => {
+      for (const key of keys) {
+        const getValue = typeof key === 'function' ? key : (item: T) => item[key];
+        const aVal = getValue(a);
+        const bVal = getValue(b);
+        
+        if (aVal < bVal) return -1;
+        if (aVal > bVal) return 1;
+      }
+
+      return 0;
+    });
+  },
+
+  /**
+   * 数组分页
+   */
+  paginate: <T>(array: T[], page: number, size: number): T[] => {
+    const startIndex = (page - 1) * size;
+
+    return array.slice(startIndex, startIndex + size);
+  }
+};
+
+/**
+ * 🔐 安全工具
+ */
+export const securityUtils = {
+  /**
+   * HTML实体编码
+   */
+  escapeHtml: (text: string): string => {
+    const div = document.createElement('div');
+
+    div.textContent = text;
+
+    return div.innerHTML;
+  },
+
+  /**
+   * 生成随机字符串
+   */
+  randomString: (length = 16): string => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    return result;
+  },
+
+  /**
+   * 简单的哈希函数（用于客户端，非加密用途）
+   */
+  simpleHash: (str: string): number => {
+    let hash = 0;
+
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // 转换为32位整数
+    }
+
+    return hash;
+  }
+};
+
+/**
+ * 🚀 性能工具
+ */
+export const performanceUtils = {
+  /**
+   * 防抖函数
+   */
+  debounce: <T extends (...args: any[]) => any>(
+    func: T,
+    wait: number
+  ): (...args: Parameters<T>) => void => {
+    let timeout: NodeJS.Timeout;
+
+    return (...args: Parameters<T>) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  },
+
+  /**
+   * 节流函数
+   */
+  throttle: <T extends (...args: any[]) => any>(
+    func: T,
+    limit: number
+  ): (...args: Parameters<T>) => void => {
+    let inThrottle = false;
+
+    return (...args: Parameters<T>) => {
+      if (!inThrottle) {
+        func(...args);
+        inThrottle = true;
+        setTimeout(() => inThrottle = false, limit);
+      }
+    };
+  },
+
+  /**
+   * 测量函数执行时间
+   */
+  measureTime: async <T>(
+    name: string,
+    fn: () => Promise<T> | T
+  ): Promise<T> => {
+    const start = performance.now();
+    const result = await fn();
+    const end = performance.now();
+
+    console.log(`⏱️ ${name}: ${(end - start).toFixed(2)}ms`);
+
+    return result;
+  }
+};
+
+/**
+ * 🌐 浏览器工具
+ */
+export const browserUtils = {
+  /**
+   * 复制文本到剪贴板
+   */
+  copyToClipboard: async (text: string): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(text);
+
+      return true;
+    } catch {
+      // 降级方案
+      const textarea = document.createElement('textarea');
+
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      const success = document.execCommand('copy');
+
+      document.body.removeChild(textarea);
+
+      return success;
+    }
+  },
+
+  /**
+   * 获取设备类型
+   */
+  getDeviceType: (): 'mobile' | 'tablet' | 'desktop' => {
+    const width = window.innerWidth;
+
+    if (width < 768) return 'mobile';
+    if (width < 1024) return 'tablet';
+
+    return 'desktop';
+  },
+
+  /**
+   * 检测浏览器支持
+   */
+  supports: {
+    webp: (): boolean => {
+      const canvas = document.createElement('canvas');
+
+      return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+    },
+    
+    localStorage: (): boolean => {
+      try {
+        localStorage.setItem('test', 'test');
+        localStorage.removeItem('test');
+
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  }
+};
+
+/**
+ * 🎲 颜色工具
+ */
+export const colorUtils = {
+  /**
+   * 生成随机颜色
+   */
+  randomColor: (): string => {
+    return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
+  },
+
+  /**
+   * 根据字符串生成一致的颜色
+   */
+  stringToColor: (str: string): string => {
+    const hash = securityUtils.simpleHash(str);
+    const hue = Math.abs(hash) % 360;
+
+    return `hsl(${hue}, 70%, 60%)`;
+  },
+
   /**
    * 获取颜色的对比色
    */
-  getContrastColor(hexColor: string): 'black' | 'white' {
-    const rgb = this.hexToRgb(hexColor);
-    if (!rgb) return 'black';
-    
-    const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
-    return brightness > 128 ? 'black' : 'white';
+  getContrastColor: (hexColor: string): string => {
+    const r = parseInt(hexColor.substr(1, 2), 16);
+    const g = parseInt(hexColor.substr(3, 2), 16);
+    const b = parseInt(hexColor.substr(5, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+    return brightness > 128 ? '#000000' : '#FFFFFF';
+  }
+};
+
+/**
+ * 📱 移动端工具
+ */
+export const mobileUtils = {
+  /**
+   * 检测是否为移动设备
+   */
+  isMobile: (): boolean => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  },
+
+  /**
+   * 防止iOS Safari的橡皮筋效果
+   */
+  preventBounce: (): void => {
+    document.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+    }, { passive: false });
+  },
+
+  /**
+   * 触发触觉反馈（如果支持）
+   */
+  hapticFeedback: (style: 'light' | 'medium' | 'heavy' = 'light'): void => {
+    if ('vibrate' in navigator) {
+      const duration = style === 'light' ? 10 : style === 'medium' ? 20 : 50;
+
+      navigator.vibrate(duration);
+    }
   }
 };

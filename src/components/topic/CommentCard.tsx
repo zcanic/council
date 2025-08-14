@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
-import { Comment } from '@/lib/api';
-import Card, { CardContent } from '@/components/ui/Card';
 import { User, Clock } from 'lucide-react';
+import React from 'react';
+
+import Card, { CardContent } from '@/components/ui/Card';
+import { Comment } from '@/lib/api';
 
 interface CommentCardProps {
   comment: Comment;

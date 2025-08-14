@@ -38,6 +38,7 @@ export function getConfig() {
 
 // For backward compatibility, export parsed config for non-build contexts
 let config: z.infer<typeof envSchema> | null = null;
+
 try {
   // Only parse config if not in build mode
   if (process.env.NODE_ENV !== undefined) {

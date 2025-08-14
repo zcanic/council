@@ -52,6 +52,7 @@ export class SNSOptimisticManager {
         
         // 5秒后清理成功的操作
         setTimeout(() => this.cleanupAction(actionId), 5000);
+
         return result;
       })
       .catch((error) => {
@@ -65,6 +66,7 @@ export class SNSOptimisticManager {
   // 智能错误处理和重试机制
   private handleFailure(actionId: string, error: any) {
     const action = this.actions.get(actionId);
+
     if (!action) return;
 
     // 网络错误 -> 自动重试
@@ -96,6 +98,7 @@ export class SNSOptimisticManager {
   // 订阅状态变化 (类似Redux)
   public subscribe(listener: (state: OptimisticState) => void) {
     this.listeners.add(listener);
+
     return () => this.listeners.delete(listener);
   }
 
@@ -118,6 +121,7 @@ export class SNSOptimisticManager {
           break;
         case 'update':
           const index = result.findIndex(item => item.id === action.data.id);
+
           if (index !== -1) {
             result[index] = { ...result[index], ...action.data, _optimistic: true };
           }
@@ -149,6 +153,7 @@ export class SNSOptimisticManager {
 
   private rollbackAction(actionId: string) {
     const action = this.actions.get(actionId);
+
     if (action) {
       action.status = 'failed';
       this.notifyListeners();

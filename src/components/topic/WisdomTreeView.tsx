@@ -1,9 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { TopicWithRelations, Summary } from '@/lib/api';
-import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
 import { 
   ArrowRight, 
   MessageCircle, 
@@ -12,6 +8,11 @@ import {
   ChevronUp,
   RotateCcw
 } from 'lucide-react';
+import { useState } from 'react';
+
+import Button from '@/components/ui/Button';
+import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { TopicWithRelations, Summary } from '@/lib/api';
 
 interface WisdomTreeViewProps {
   topic: TopicWithRelations;
@@ -48,12 +49,14 @@ function TreeNode({
     if (isActive) return 'bg-blue-100 border-blue-300 text-blue-900';
     if (type === 'summary') return 'bg-purple-50 border-purple-200 text-purple-800';
     if (isLocked) return 'bg-amber-50 border-amber-200 text-amber-800';
+
     return 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100';
   };
   
   const getIcon = () => {
     if (type === 'summary') return <Sparkles size={16} />;
     if (isLocked) return <MessageCircle size={16} className="text-amber-600" />;
+
     return <MessageCircle size={16} />;
   };
   

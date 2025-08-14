@@ -23,12 +23,14 @@ export default function ProgressRing({
   const getProgressColor = () => {
     if (progress >= total) return '#10B981'; // green-500 - 完成
     if (progress >= total * 0.8) return '#F59E0B'; // amber-500 - 即将完成
+
     return '#3B82F6'; // blue-500 - 进行中
   };
   
   const getBackgroundColor = () => {
     if (progress >= total) return '#D1FAE5'; // green-100
     if (progress >= total * 0.8) return '#FEF3C7'; // amber-100
+
     return '#DBEAFE'; // blue-100
   };
 

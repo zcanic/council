@@ -1,8 +1,9 @@
 'use client';
 
-import { Summary } from '@/lib/api';
-import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Sparkles, MessageSquare, HelpCircle } from 'lucide-react';
+
+import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Summary } from '@/lib/api';
 
 interface SummaryCardProps {
   summary: Summary;

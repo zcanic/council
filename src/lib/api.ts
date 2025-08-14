@@ -75,7 +75,9 @@ class ParliamentAPI {
           ...options.headers,
         },
       });
+
       clearTimeout(timeoutId);
+
       return response;
     } catch (error) {
       clearTimeout(timeoutId);
@@ -90,9 +92,11 @@ class ParliamentAPI {
     const response = await this.fetchWithTimeout(`${this.baseURL}/api/topics`, {
       cache: 'no-cache',
     });
+
     if (!response.ok) {
       throw new Error('获取议题列表失败，请稍后重试');
     }
+
     return response.json();
   }
 
@@ -104,6 +108,7 @@ class ParliamentAPI {
 
     if (!response.ok) {
       const error = await response.json();
+
       throw new Error(error.message || '创建议题失败，请重试');
     }
 
@@ -114,12 +119,14 @@ class ParliamentAPI {
     const response = await this.fetchWithTimeout(`${this.baseURL}/api/topics/${id}`, {
       cache: 'no-cache',
     });
+
     if (!response.ok) {
       if (response.status === 404) {
         throw new Error('议题不存在');
       }
       throw new Error('获取议题详情失败，请刷新重试');
     }
+
     return response.json();
   }
 
@@ -131,6 +138,7 @@ class ParliamentAPI {
 
     if (!response.ok) {
       const error = await response.json();
+
       if (response.status === 403) {
         throw new Error('此讨论回环已锁定，AI正在生成摘要');
       }
@@ -146,6 +154,7 @@ class ParliamentAPI {
   async checkHealth(): Promise<{ status: string; message: string }> {
     try {
       const response = await this.fetchWithTimeout(`${this.baseURL}/api/health`);
+
       return response.json();
     } catch (error) {
       return { status: 'error', message: '服务器连接失败' };
